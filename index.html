@@ -4,19 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Nourish</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
 <style>
 :root {
-  --ink: #1A1A18;
-  --paper: #F7F4EE;
-  --paper2: #EFECE5;
-  --paper3: #E8E4DC;
-  --rule: #D0CCc3;
-  --muted: #8C8880;
-  --accent: #C4602A;
+  --ink: #0A0A0A;
+  --paper: #FFFFFF;
+  --paper2: #F5F5F5;
+  --paper3: #EBEBEB;
+  --rule: #E0E0E0;
+  --muted: #888888;
+  --accent: #2563EB;
+  --accent-light: #EFF6FF;
   --white: #FFFFFF;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -192,13 +193,13 @@ html, body { height: 100%; background: var(--paper); color: var(--ink); font-fam
   text-transform: uppercase;
   color: var(--accent);
   background: none;
-  border: 1px solid var(--accent);
-  border-radius: 2px;
+  border: 1.5px solid var(--accent);
+  border-radius: 4px;
   padding: 5px 12px;
   cursor: pointer;
   transition: all .15s;
 }
-.log-btn:active { background: var(--accent); color: var(--paper); }
+.log-btn:active { background: var(--accent); color: var(--white); }
 
 /* MEAL LIST */
 .meal-group { border-bottom: 1px solid var(--rule); }
@@ -424,9 +425,15 @@ html, body { height: 100%; background: var(--paper); color: var(--ink); font-fam
 /* MODAL */
 .modal-bg {
   position: fixed; inset: 0;
-  background: rgba(26,26,24,.6);
+  background: rgba(0,0,0,.55);
   z-index: 200;
-  display: flex; align-items: flex-end; justify-content: center;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+@media (min-height: 700px) {
+  .modal-bg { align-items: center; }
+  .modal { border-radius: 16px; border-top: none; border: 1px solid var(--rule); max-height: 85vh; }
 }
 .modal {
   background: var(--paper);
@@ -619,7 +626,7 @@ html, body { height: 100%; background: var(--paper); color: var(--ink); font-fam
 .settings-row-sub { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: .06em; margin-top: 3px; }
 .settings-num { background: transparent; border: none; border-bottom: 1px solid var(--rule); color: var(--ink); font-family: 'DM Mono', monospace; font-size: 16px; padding: 4px 0; width: 72px; text-align: right; outline: none; }
 .settings-num:focus { border-bottom-color: var(--accent); }
-.settings-text { background: transparent; border: none; border-bottom: 1px solid var(--rule); color: var(--ink); font-family: 'DM Mono', monospace; font-size: 12px; padding: 4px 0; flex: 1; margin-left: 12px; outline: none; }
+.settings-text { background: transparent; border: none; border-bottom: 1px solid var(--rule); color: var(--ink); font-family: 'DM Mono', monospace; font-size: 16px; padding: 4px 0; flex: 1; margin-left: 12px; outline: none; }
 .settings-text:focus { border-bottom-color: var(--accent); }
 
 /* WEIGHT STRIP */
@@ -1089,7 +1096,10 @@ function showPhotoAnalysis(){
     <div class="modal-handle"></div>
     <div class="modal-title">${settings.apiKey?'Analyzing…':'Log meal'}</div>
     ${pendingPhoto?`<img class="preview-img" src="${pendingPhoto}">`:''}
-    <div id="analysis-area">${settings.apiKey?`<div class="analyze-card"><div class="spinner"></div><span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.06em">Identifying food…</span></div>`:`<div style="border-left:2px solid var(--rule);padding:10px 14px;margin-bottom:14px;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.06em;line-height:1.8">Add an Anthropic API key in Profile to enable AI analysis.</div>`}</div>
+    <div id="analysis-area">${settings.apiKey
+    ?`<div class="analyze-card"><div class="spinner"></div><span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.06em">Identifying food…</span></div>`
+    :`<div style="border-left:2px solid var(--accent);padding:10px 14px;margin-bottom:14px;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.06em;line-height:1.8;background:var(--accent-light)">Add an API key in Profile → to enable AI analysis. Enter manually below.</div>`
+  }</div>
     <div id="manual-fields" style="${settings.apiKey?'display:none':''}">
       <div class="field-label">Meal</div>
       <div class="meal-type-grid" id="photo-mtg">
@@ -1114,6 +1124,13 @@ function showPhotoAnalysis(){
   if(settings.apiKey) analyzeWithAI();
 }
 async function analyzeWithAI(){
+  // Timeout after 12 seconds
+  const timeout = setTimeout(()=>{
+    const area=document.getElementById('analysis-area'), fields=document.getElementById('manual-fields'), btn=document.getElementById('save-btn');
+    if(area) area.innerHTML=`<div style="border-left:2px solid var(--muted);padding:10px 14px;margin-bottom:10px;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.06em">Timed out — enter manually below.</div>`;
+    if(fields) fields.style.display='block';
+    if(btn) btn.style.display='block';
+  }, 12000);
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':settings.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-calls':'true'},
@@ -1122,6 +1139,7 @@ async function analyzeWithAI(){
         {type:'text',text:'Analyze this food. JSON only, no markdown: {"name":"food name","calories":number,"protein":number,"carbs":number,"fat":number}'}
       ]}]})
     });
+    clearTimeout(timeout);
     const data=await res.json();
     const r=JSON.parse(data.content.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim());
     const area=document.getElementById('analysis-area'), fields=document.getElementById('manual-fields'), btn=document.getElementById('save-btn');
@@ -1135,6 +1153,7 @@ async function analyzeWithAI(){
     }
     if(btn) btn.style.display='block';
   }catch(e){
+    clearTimeout(timeout);
     const area=document.getElementById('analysis-area'), fields=document.getElementById('manual-fields'), btn=document.getElementById('save-btn');
     if(area) area.innerHTML='';
     if(fields) fields.style.display='block';
@@ -1300,12 +1319,22 @@ function renderSettings(){
       <input class="settings-num" type="number" inputmode="decimal" value="${s[k]||''}" placeholder="—" onchange="setSetting('${k}',this.value)">
     </div>`).join('')}
     <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding:20px 0 10px;border-bottom:2px solid var(--ink)">AI Analysis</div>
-    <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:10px;padding-bottom:16px">
-      <div>
+    <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:12px;padding-bottom:16px">
+      <div style="width:100%">
         <div class="settings-row-lbl">Anthropic API Key</div>
-        <div class="settings-row-sub">console.anthropic.com → API Keys · ~$0.002 per photo</div>
+        <div class="settings-row-sub">Required for photo analysis and food estimates</div>
       </div>
-      <input class="settings-text" type="password" placeholder="sk-ant-…" value="${s.apiKey||''}" style="margin-left:0;width:100%" onchange="setSetting('apiKey',this.value)">
+      ${s.apiKey
+        ? `<div style="display:flex;align-items:center;justify-content:space-between;width:100%;background:var(--paper2);border:1px solid var(--rule);padding:12px 14px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0"></div>
+              <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)">Key saved · sk-ant-···${s.apiKey.slice(-6)}</div>
+            </div>
+            <button onclick="promptChangeApiKey()" style="background:none;border:none;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);cursor:pointer;padding:4px 0">Change</button>
+          </div>`
+        : `<button onclick="promptAddApiKey()" style="width:100%;background:var(--ink);color:var(--paper);border:none;padding:13px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer">+ Add API Key</button>
+           <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.05em;line-height:1.7">Get a free key at console.anthropic.com → API Keys<br>~$0.002 per photo analysis</div>`
+      }
     </div>
     <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding:20px 0 10px;border-bottom:2px solid var(--ink)">App</div>
     <div class="settings-row" style="flex-direction:column;align-items:flex-start">
@@ -1318,6 +1347,63 @@ function renderSettings(){
     <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.08em;padding-bottom:20px">Nourish · All data stored on your device</div>
   </div>`;
   document.getElementById('settings-body').innerHTML=html;
+}
+function promptAddApiKey(){ showApiKeyModal(false); }
+function promptChangeApiKey(){ showApiKeyModal(true); }
+
+function showApiKeyModal(isChange){
+  removeModal();
+  const m=document.createElement('div'); m.className='modal-bg'; m.id='log-modal';
+  m.innerHTML=`<div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">${isChange?'Change':'Add'} API Key</div>
+    <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.05em;line-height:1.8;margin-bottom:16px">
+      Get a key at <b style="color:var(--ink)">console.anthropic.com</b> → API Keys<br>
+      Free to create · ~$0.002 per photo
+    </div>
+    <div class="field-label">Paste your key</div>
+    <input class="field-input" id="api-key-input" type="password" placeholder="sk-ant-api03-…" autocomplete="off" style="font-size:16px;letter-spacing:.05em">
+    <div id="api-test-status" style="min-height:20px;margin-top:8px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.06em"></div>
+    <button class="btn-primary" onclick="testAndSaveApiKey()">Test &amp; Save</button>
+    ${isChange?`<button class="btn-danger" onclick="removeApiKey()">Remove Key</button>`:''}
+    <button class="btn-secondary" onclick="removeModal()">Cancel</button>
+  </div>`;
+  document.body.appendChild(m);
+  m.addEventListener('click',e=>{ if(e.target===m) removeModal(); });
+  setTimeout(()=>document.getElementById('api-key-input')?.focus(),150);
+}
+
+async function testAndSaveApiKey(){
+  const input=document.getElementById('api-key-input');
+  const status=document.getElementById('api-test-status');
+  const key=input?.value?.trim();
+  if(!key||!key.startsWith('sk-ant-')){ if(status) status.textContent='Key must start with sk-ant-'; return; }
+  if(status){ status.style.color='var(--muted)'; status.textContent='Testing key…'; }
+  const btn=document.querySelector('#log-modal .btn-primary');
+  if(btn){ btn.textContent='Testing…'; btn.style.opacity='.6'; btn.disabled=true; }
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-calls':'true'},
+      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:10,messages:[{role:'user',content:'Hi'}]})
+    });
+    if(res.ok||res.status===200){
+      settings.apiKey=key; save();
+      if(status){ status.style.color='#22c55e'; status.textContent='Key works! Saving…'; }
+      setTimeout(()=>{ removeModal(); renderSettings(); showToast('API key saved'); },800);
+    } else {
+      const err=await res.json().catch(()=>({}));
+      if(status){ status.style.color='var(--accent)'; status.textContent=err.error?.message||'Invalid key — check and try again'; }
+      if(btn){ btn.textContent='Test & Save'; btn.style.opacity='1'; btn.disabled=false; }
+    }
+  }catch(e){
+    if(status){ status.style.color='var(--muted)'; status.textContent='Could not connect — check your internet'; }
+    if(btn){ btn.textContent='Test & Save'; btn.style.opacity='1'; btn.disabled=false; }
+  }
+}
+
+function removeApiKey(){
+  if(confirm('Remove API key? AI analysis will be disabled.')){ settings.apiKey=''; save(); removeModal(); renderSettings(); }
 }
 function setSetting(k,v){ settings[k]=v; save(); if(['goal','pGoal','cGoal','fGoal'].includes(k)) renderHome(); renderSettings(); }
 function clearData(){ if(confirm('Delete all meal data?')){ meals=[];save();showTab('home'); } }
